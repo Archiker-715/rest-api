@@ -15,12 +15,12 @@ var DB *gorm.DB
 
 func Connect() {
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port%s sslmode=disable",
-		getEnv("DB_HOST", "localhost"),
-		getEnv("DB_USER", "postgres"),
-		getEnv("DB_PASSWORD", "password"),
-		getEnv("DB_NAME", "rest_api_db"),
-		getEnv("DB_PORT", "5432"),
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		getEnv("DB_HOST"),
+		getEnv("DB_USER"),
+		getEnv("DB_PASSWORD"),
+		getEnv("DB_NAME"),
+		getEnv("DB_PORT"),
 	)
 
 	var err error
@@ -38,9 +38,9 @@ func Connect() {
 	log.Println("Database connected successfully")
 }
 
-func getEnv(key, defaultValue string) string {
+func getEnv(key string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
-	return defaultValue
+	return ""
 }

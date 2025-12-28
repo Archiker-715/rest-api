@@ -1,0 +1,69 @@
+definitions:
+  entity.Item:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      inserted:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      updated:
+        type: string
+    type: object
+  entity.ItemRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        minimum: 0
+        type: number
+    required:
+    - name
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Описание API
+  title: My API
+  version: "1.0"
+paths:
+  /api/v1/items:
+    post:
+      consumes:
+      - application/json
+      description: Создает новый элемент в системе
+      parameters:
+      - description: Данные элемента
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/entity.ItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Item'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Создание элемента
+      tags:
+      - items
+swagger: "2.0"

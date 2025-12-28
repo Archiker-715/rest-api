@@ -8,19 +8,20 @@ import (
 
 	"github.com/Archiker-715/rest-api/internal/entity"
 	"github.com/Archiker-715/rest-api/internal/repository/pg/items"
+	"github.com/Archiker-715/rest-api/internal/usecase"
 	"github.com/gorilla/mux"
 )
 
 type ItemHandler struct {
-	repo *items.ItemRepository
+	items *usecase.ItemService
 }
 
 func NewItemHandler(repo *items.ItemRepository) *ItemHandler {
-	return &ItemHandler{repo: repo}
+	return &ItemHandler{items: usecase.NewItemService(repo)}
 }
 
 func (h *ItemHandler) GetItems(w http.ResponseWriter, r *http.Request) {
-	items, err := h.repo.GetItems()
+	items, err := h.items.GetItems()
 	if err != nil {
 		http.Error(w, "failed to fetch items", http.StatusInternalServerError)
 		return
@@ -30,6 +31,15 @@ func (h *ItemHandler) GetItems(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(items)
 }
 
+// @Summary Создание элемента
+// @Description Создает новый элемент в системе
+// @Tags items
+// @Accept json
+// @Produce json
+// @Param item body entity.ItemRequest true "Данные элемента"
+// @Success 200 {object} entity.Item
+// @Failure 400 {object} ErrorResponse
+// @Router /api/v1/items [post]
 func (h *ItemHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	var req entity.ItemRequest
 
@@ -38,14 +48,10 @@ func (h *ItemHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	item := entity.Item{
-		Name:        req.Name,
-		Description: req.Description,
-		Price:       req.Price,
-	}
-
-	if err := h.repo.Create(&item); err != nil {
-		http.Error(w, "failed to create item", http.StatusInternalServerError)
+	item, err := h.items.CreateItem(&req)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to create item: "+err.Error())
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -55,23 +61,22 @@ func (h *ItemHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 
 func (h *ItemHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	idStr := vars["id"]
 	// maybe check id > 0
 
-	var req entity.ItemRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed convert id: %v", err), http.StatusBadRequest)
+	}
+
+	var req *entity.ItemRequest
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	item := entity.Item{
-		ID:          id,
-		Name:        req.Name,
-		Description: req.Description,
-		Price:       req.Price,
-	}
-
-	if err := h.repo.Update(&item); err != nil {
+	item, err := h.items.UpdateItem(req, id)
+	if err != nil {
 		http.Error(w, "failed update item", http.StatusInternalServerError)
 	}
 
@@ -81,15 +86,15 @@ func (h *ItemHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 
 func (h *ItemHandler) DeleteItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	idStr := vars["id"]
 	// maybe check id > 0
 
-	numId, err := strconv.Atoi(id)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed get id: %w", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("failed get id: %v", err), http.StatusInternalServerError)
 	}
 
-	if err := h.repo.Delete(uint(numId)); err != nil {
+	if err := h.items.DeleteItem(id); err != nil {
 		http.Error(w, "failed delete item", http.StatusInternalServerError)
 	}
 

@@ -36,5 +36,5 @@ func (r *ItemRepository) Update(item *entity.Item) error {
 }
 
 func (r *ItemRepository) Delete(id uint) error {
-	return r.DB.Delete(&entity.Item{}).Error
+	return r.DB.Delete(&entity.Item{ID: id}).Error
 }

@@ -1,7 +1,7 @@
 package entity
 
 type Item struct {
-	ID          string  `json:"id" gorm:"primaryKey"`
+	ID          uint    `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name        string  `json:"name" gorm:"not null"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price" gorm:"not null,check:price >=0"`
